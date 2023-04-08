@@ -1,11 +1,13 @@
 import json
-from typing import Any
+from typing import Any, Literal
 
 import requests
-from objects import Update, MessageEntity
+from requests import Response
+from loguru import logger
 from pydantic import HttpUrl, parse_obj_as
-from config import ApiConf
 
+from tg_api.config import ApiConf
+from tg_api.objects import MessageEntity, Update
 
 config = ApiConf()  # type: ignore
 
@@ -13,36 +15,42 @@ def make_request(
     method: str,
     params: dict[str, Any],
     config: ApiConf = config,
-) -> Any:
+) -> Response | None:
     with requests.Session() as session:
         response = session.post(
-            url=config.url + method,
+            url=config.url + '/' + method,
             headers=config.headers,
             json=params,
         )
     
     if response is None:
-        return
+        logger.warning("Request hasn't returned any response")
+        return None
     elif response.status_code != 200:
-        return
+        logger.warning(f"Bad request: {response.status_code, response.text}")
+        return response
     else:
-        return json.loads(response.content.decode('utf-8'))['result']
+        logger.info('Succesfull request')
+        return response
 
 def get_updates(
     offset: int | None = None,
     limit: int = 100,
     timeout: int = 0,
     allowed_updates: list | str = 'chat_member',
-) -> list[Update] | None:
+) -> list[Update]:
     params = {
         'offset': offset,
         'limit': limit,
         'timeout': timeout,
         'allowed_updates': allowed_updates,
     }
-    result = make_request(method='getUpdates', params=params)
-    if result:
+    resp = make_request(method='getUpdates', params=params)
+    if resp:
+        result = json.loads(resp.content.decode('utf-8'))['result']
         return parse_obj_as(list[Update], result)
+    else:
+        return []
     
 def send_message(
     chat_id: int | str,
@@ -50,7 +58,7 @@ def send_message(
     parse_mode: str = 'MarkdownV2',
     entities: list[MessageEntity] | None = None,
     reply_to_message_id: int | None = None,
-) -> None:
+) -> bool:
     params = {
         'chat_id': chat_id,
         'text': text,
@@ -58,4 +66,51 @@ def send_message(
         'entites': entities,
         'reply_to_message_id': reply_to_message_id,
     }
-    result = make_request(method='sendMessage', params=params)
+    resp = make_request(method='sendMessage', params=params)
+    return resp is not None and resp.status_code == 200
+
+def send_poll(
+    chat_id: int | str,
+    question: str,
+    options: list[str],
+    message_thread_id: int | None = None,
+    is_anonymous: bool = True,
+    type: Literal['quiz', 'regular'] = 'regular',
+    allows_multiple_answers: bool = True,
+    correct_option_id: bool | None = None,
+    explanation: str | None = None,
+    explanation_parse_mode: str | None = None,
+    explanation_entities: list[MessageEntity] | None = None,
+    open_period: int | None = None,
+    close_date: int | None = None,
+    is_closed: bool | None = None,
+    disable_notification: bool | None = None,
+    protect_content: bool | None = None,
+    reply_to_message_id: int | None = None,
+    allow_sending_without_reply: bool | None = None,
+    reply_markup: None = None,
+) -> bool:
+    params = {
+        'chat_id': chat_id,
+        'question': question,
+        'options': options,
+        'message_thread_id': message_thread_id,
+        'is_anonymous': is_anonymous,
+        'type': type,
+        'allows_multiple_answers': allows_multiple_answers,
+        'correct_option_id': correct_option_id,
+        'explanation': explanation,
+        'explanation_parse_mode': explanation_parse_mode,
+        'explanation_entities': explanation_entities,
+        'open_period': open_period,
+        'close_date': close_date,
+        'is_closed': is_closed,
+        'disable_notification': disable_notification,
+        'protect_content': protect_content,
+        'reply_to_message_id': reply_to_message_id,
+        'allow_sending_without_reply': allow_sending_without_reply,
+        # 'reply_markup': reply_markup,
+    }
+
+    resp = make_request(method='sendPoll', params=params)
+    return resp is not None and resp.status_code == 200
