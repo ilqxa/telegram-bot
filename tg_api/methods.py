@@ -7,7 +7,7 @@ from loguru import logger
 from pydantic import HttpUrl, parse_obj_as
 
 from tg_api.config import ApiConf
-from tg_api.objects import MessageEntity, Update
+from tg_api.objects import MessageEntity, Update, InlineKeyboardMarkup
 
 config = ApiConf()  # type: ignore
 
@@ -33,6 +33,7 @@ def make_request(
         logger.info('Succesfull request')
         return response
 
+
 def get_updates(
     offset: int | None = None,
     limit: int = 100,
@@ -52,22 +53,37 @@ def get_updates(
     else:
         return []
     
+
 def send_message(
     chat_id: int | str,
     text: str,
-    parse_mode: str = 'MarkdownV2',
+    message_thread_id: int | None = None,
+    parse_mode: Literal['MarkdownV2', 'Markdown', 'HTML'] = 'MarkdownV2',
     entities: list[MessageEntity] | None = None,
+    disable_web_page_preview: bool | None = None,
+    disable_notification: bool | None = None,
+    protect_content: bool | None = None,
     reply_to_message_id: int | None = None,
+    allow_sending_without_reply: bool | None = None,
+    reply_markup: InlineKeyboardMarkup | None = None,
 ) -> bool:
     params = {
         'chat_id': chat_id,
         'text': text,
+        'message_thread_id': message_thread_id,
         'parse_mode': parse_mode,
         'entites': entities,
+        'disable_web_page_preview': disable_web_page_preview,
+        'disable_notification': disable_notification,
+        'protect_content': protect_content,
         'reply_to_message_id': reply_to_message_id,
+        'allow_sending_without_reply': allow_sending_without_reply,
     }
+    if reply_markup: params['reply_markup'] = reply_markup
+
     resp = make_request(method='sendMessage', params=params)
     return resp is not None and resp.status_code == 200
+
 
 def send_poll(
     chat_id: int | str,
@@ -88,7 +104,7 @@ def send_poll(
     protect_content: bool | None = None,
     reply_to_message_id: int | None = None,
     allow_sending_without_reply: bool | None = None,
-    reply_markup: None = None,
+    reply_markup: InlineKeyboardMarkup | None = None,
 ) -> bool:
     params = {
         'chat_id': chat_id,
@@ -109,8 +125,8 @@ def send_poll(
         'protect_content': protect_content,
         'reply_to_message_id': reply_to_message_id,
         'allow_sending_without_reply': allow_sending_without_reply,
-        # 'reply_markup': reply_markup,
     }
+    if reply_markup: params['reply_markup'] = reply_markup
 
     resp = make_request(method='sendPoll', params=params)
     return resp is not None and resp.status_code == 200

@@ -73,6 +73,22 @@ class PollAnswer(ApiObject):
     option_ids: list[int]
 
 
+class InlineKeyboardMarkup(ApiObject):
+    inline_keyboard: list[list[InlineKeyboardButton]]
+
+
+class InlineKeyboardButton(ApiObject):
+    text: str
+    url: str | None
+    callback_data: str | None
+    web_app: None
+    login_url: None
+    switch_inline_query: str | None
+    switch_inline_query_current_chat: str | None
+    callback_game: None
+    pay: bool | None
+
+
 Update.update_forward_refs()
 Message.update_forward_refs()
 Chat.update_forward_refs()
@@ -81,3 +97,5 @@ MessageEntity.update_forward_refs()
 Poll.update_forward_refs()
 PollOption.update_forward_refs()
 PollAnswer.update_forward_refs()
+InlineKeyboardMarkup.update_forward_refs()
+InlineKeyboardButton.update_forward_refs()
