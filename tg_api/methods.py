@@ -65,7 +65,7 @@ def send_message(
     protect_content: bool | None = None,
     reply_to_message_id: int | None = None,
     allow_sending_without_reply: bool | None = None,
-    reply_markup: InlineKeyboardMarkup | None = None,
+    reply_markup: dict[str, Any] | None = None,
 ) -> bool:
     params = {
         'chat_id': chat_id,
@@ -104,7 +104,7 @@ def send_poll(
     protect_content: bool | None = None,
     reply_to_message_id: int | None = None,
     allow_sending_without_reply: bool | None = None,
-    reply_markup: InlineKeyboardMarkup | None = None,
+    reply_markup: dict[str, Any] | None = None,
 ) -> bool:
     params = {
         'chat_id': chat_id,
@@ -129,4 +129,44 @@ def send_poll(
     if reply_markup: params['reply_markup'] = reply_markup
 
     resp = make_request(method='sendPoll', params=params)
+    return resp is not None and resp.status_code == 200
+
+
+def answer_callback_query(
+    callback_query_id: str,
+    text: str | None = None,
+    show_alert: bool = False,
+    url: str | None = None,
+    cache_time: int = 0,
+) -> bool:
+    params = {
+        'callback_query_id': callback_query_id,
+        'text': text,
+        'show_alert': show_alert,
+        'url': url,
+        'cache_time': cache_time,
+    }
+
+    resp = make_request(method='answerCallbackQuery', params=params)
+    return resp is not None and resp.status_code == 200
+
+
+def forward_message(
+    chat_id: int | str,
+    from_chat_id: int | str,
+    message_id: int,
+    message_thread_id: int | None,
+    disable_notification: bool | None = None,
+    protect_content: bool | None = None,
+) -> bool:
+    params = {
+        'chat_id': chat_id,
+        'from_chat_id': from_chat_id,
+        'message_id': message_id,
+        'message_thread_id': message_thread_id,
+        'disable_notification': disable_notification,
+        'protect_content': protect_content,
+    }
+
+    resp = make_request(method='forwardMessage', params=params)
     return resp is not None and resp.status_code == 200

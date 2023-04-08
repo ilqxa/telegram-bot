@@ -1,21 +1,27 @@
 from __future__ import annotations
 
-from abc import ABC
-
 from pydantic import BaseModel, Field
 
 
-class ApiObject(BaseModel, ABC):
-    ...
-
-class Update(ApiObject):
+class Update(BaseModel):
     update_id: int
     message: Message | None
     poll: Poll | None
     poll_answer: PollAnswer | None
+    callback_query: CallbackQuery | None
 
 
-class Message(ApiObject):
+class CallbackQuery(BaseModel):
+    id: str
+    from_user: User = Field(alias='from')
+    message: Message | None
+    inline_message_id: str | None
+    chat_instance: str | None
+    data: str | None
+    game_short_name: str | None
+
+
+class Message(BaseModel):
     message_id: int
     date: int
     from_user: User | None = Field(alias='from')
@@ -25,18 +31,18 @@ class Message(ApiObject):
     poll: Poll | None
 
 
-class Chat(ApiObject):
+class Chat(BaseModel):
     id: int
 
 
-class User(ApiObject):
+class User(BaseModel):
     id: int
     first_name: str
     last_name: str | None
     username: str | None
 
 
-class MessageEntity(ApiObject):
+class MessageEntity(BaseModel):
     type: str
     offset: int
     length: int
@@ -46,7 +52,7 @@ class MessageEntity(ApiObject):
     custom_emoji_id: str | None
 
 
-class Poll(ApiObject):
+class Poll(BaseModel):
     id: str
     question: str
     options: list[PollOption]
@@ -62,34 +68,35 @@ class Poll(ApiObject):
     close_date: int | None
 
 
-class PollOption(ApiObject):
+class PollOption(BaseModel):
     text: str | None
     voter_count: int
 
 
-class PollAnswer(ApiObject):
+class PollAnswer(BaseModel):
     poll_id: str
     user: User
     option_ids: list[int]
 
 
-class InlineKeyboardMarkup(ApiObject):
+class InlineKeyboardMarkup(BaseModel):
     inline_keyboard: list[list[InlineKeyboardButton]]
 
 
-class InlineKeyboardButton(ApiObject):
+class InlineKeyboardButton(BaseModel):
     text: str
     url: str | None
     callback_data: str | None
-    web_app: None
-    login_url: None
+    web_app: str | None
+    login_url: str | None
     switch_inline_query: str | None
     switch_inline_query_current_chat: str | None
-    callback_game: None
+    callback_game: str | None
     pay: bool | None
 
 
 Update.update_forward_refs()
+CallbackQuery.update_forward_refs()
 Message.update_forward_refs()
 Chat.update_forward_refs()
 User.update_forward_refs()
