@@ -174,12 +174,12 @@ def forward_message(
 
 def set_my_commands(
     commands: list[BotCommand],
-    scope: BotCommandScope,
-    language_code: str | None,
+    scope: BotCommandScope | None = None,
+    language_code: str | None = None,
 ) -> bool:
     params = {
         'commands': commands,
-        'scope': scope,
+        'scope': scope.json() if scope else None,
         'language_code': language_code,
     }
     
@@ -188,11 +188,11 @@ def set_my_commands(
 
 
 def delete_my_commands(
-    scope: BotCommandScope | None,
-    language_code: str | None,
+    scope: BotCommandScope | None = None,
+    language_code: str | None = None,
 ) -> bool:
     params = {
-        'scope': scope,
+        'scope': scope.json() if scope else None,
         'language_code': language_code,
     }
     
@@ -201,11 +201,11 @@ def delete_my_commands(
 
 
 def get_my_commands(
-    scope: BotCommandScope | None,
-    language_code: str | None,
+    scope: BotCommandScope | None = None,
+    language_code: str | None = None,
 ) -> bool:
     params = {
-        'scope': scope,
+        'scope': scope.json() if scope else None,
         'language_code': language_code,
     }
     
