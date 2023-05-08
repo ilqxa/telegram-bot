@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
 class Update(BaseModel):
     update_id: int
     message: Message | None
+    channel_post: Message | None
     poll: Poll | None
     poll_answer: PollAnswer | None
     callback_query: CallbackQuery | None
@@ -33,6 +36,8 @@ class Message(BaseModel):
 
 class Chat(BaseModel):
     id: int
+    type: Literal['private', 'group', 'supergroup', 'channel']
+    title: str | None
 
 
 class User(BaseModel):
@@ -93,7 +98,21 @@ class InlineKeyboardButton(BaseModel):
     switch_inline_query_current_chat: str | None
     callback_game: str | None
     pay: bool | None
-
+    
+    
+class BotCommand(BaseModel):
+    command: str = Field(max_length=32)
+    description: str = Field(max_length=256)
+    
+    
+class BotCommandScope(BaseModel):
+    ...
+    
+    
+class BotCommandScopeChatAdministrators(BotCommandScope):
+    type: str = 'chat_administrators'
+    chat_id: int | str
+    
 
 Update.update_forward_refs()
 CallbackQuery.update_forward_refs()
@@ -106,3 +125,6 @@ PollOption.update_forward_refs()
 PollAnswer.update_forward_refs()
 InlineKeyboardMarkup.update_forward_refs()
 InlineKeyboardButton.update_forward_refs()
+BotCommand.update_forward_refs()
+BotCommandScope.update_forward_refs()
+BotCommandScopeChatAdministrators.update_forward_refs()
