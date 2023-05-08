@@ -109,8 +109,8 @@ class BotCommandScope(BaseModel):
     ...
     
     
-class BotCommandScopeChatAdministrators(BotCommandScope):
-    type: str = 'chat_administrators'
+class BotCommandScopeChat(BotCommandScope):
+    type: str = 'chat'
     chat_id: int | str
     
 
@@ -127,4 +127,4 @@ InlineKeyboardMarkup.update_forward_refs()
 InlineKeyboardButton.update_forward_refs()
 BotCommand.update_forward_refs()
 BotCommandScope.update_forward_refs()
-BotCommandScopeChatAdministrators.update_forward_refs()
+BotCommandScopeChat.update_forward_refs()

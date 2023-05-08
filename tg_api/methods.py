@@ -20,7 +20,7 @@ def make_request(
         response = session.post(
             url=config.url + '/' + method,
             headers=config.headers,
-            json=params,
+            params=params,
         )
     
     if response is None:
@@ -176,11 +176,11 @@ def set_my_commands(
     scope: BotCommandScope | None = None,
     language_code: str | None = None,
 ) -> bool:
-    params = {
-        'commands': commands,
-        'scope': scope.json() if scope else None,
-        'language_code': language_code,
+    params: dict[str, Any] = {
+        'commands': json.dumps([c.dict() for c in commands]),
     }
+    if scope: params['scope'] = scope.json()
+    if language_code: params['language_code'] = language_code
     
     resp = make_request(method='setMyCommands', params=params)
     return resp is not None and resp.status_code == 200
@@ -190,10 +190,9 @@ def delete_my_commands(
     scope: BotCommandScope | None = None,
     language_code: str | None = None,
 ) -> bool:
-    params = {
-        'scope': scope.json() if scope else None,
-        'language_code': language_code,
-    }
+    params: dict[str, Any] = {}
+    if scope: params['scope'] = scope.json()
+    if language_code: params['language_code'] = language_code
     
     resp = make_request(method='deleteMyCommands', params=params)
     return resp is not None and resp.status_code == 200
@@ -203,10 +202,9 @@ def get_my_commands(
     scope: BotCommandScope | None = None,
     language_code: str | None = None,
 ) -> list[BotCommand]:
-    params = {
-        'scope': scope.json() if scope else None,
-        'language_code': language_code,
-    }
+    params: dict[str, Any] = {}
+    if scope: params['scope'] = scope.json()
+    if language_code: params['language_code'] = language_code
     
     if resp := make_request(method='getMyCommands', params=params):
         result = json.loads(resp.content.decode('utf-8'))['result']
