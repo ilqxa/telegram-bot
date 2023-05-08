@@ -46,8 +46,7 @@ def get_updates(
         'timeout': timeout,
         'allowed_updates': allowed_updates,
     }
-    resp = make_request(method='getUpdates', params=params)
-    if resp:
+    if resp := make_request(method='getUpdates', params=params):
         result = json.loads(resp.content.decode('utf-8'))['result']
         return parse_obj_as(list[Update], result)
     else:
@@ -203,11 +202,14 @@ def delete_my_commands(
 def get_my_commands(
     scope: BotCommandScope | None = None,
     language_code: str | None = None,
-) -> bool:
+) -> list[BotCommand]:
     params = {
         'scope': scope.json() if scope else None,
         'language_code': language_code,
     }
     
-    resp = make_request(method='getMyCommands', params=params)
-    return resp is not None and resp.status_code == 200
+    if resp := make_request(method='getMyCommands', params=params):
+        result = json.loads(resp.content.decode('utf-8'))['result']
+        return parse_obj_as(list[BotCommand], result)
+    else:
+        return []
