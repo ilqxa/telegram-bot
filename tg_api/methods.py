@@ -7,7 +7,7 @@ from loguru import logger
 from pydantic import HttpUrl, parse_obj_as
 
 from tg_api.config import ApiConf
-from tg_api.objects import MessageEntity, Update, InlineKeyboardMarkup
+from tg_api.objects import MessageEntity, Update, InlineKeyboardMarkup, BotCommand, BotCommandScope
 
 config = ApiConf()  # type: ignore
 
@@ -169,4 +169,45 @@ def forward_message(
     }
 
     resp = make_request(method='forwardMessage', params=params)
+    return resp is not None and resp.status_code == 200
+
+
+def set_my_commands(
+    commands: list[BotCommand],
+    scope: BotCommandScope,
+    language_code: str | None,
+) -> bool:
+    params = {
+        'commands': commands,
+        'scope': scope,
+        'language_code': language_code,
+    }
+    
+    resp = make_request(method='setMyCommands', params=params)
+    return resp is not None and resp.status_code == 200
+
+
+def delete_my_commands(
+    scope: BotCommandScope | None,
+    language_code: str | None,
+) -> bool:
+    params = {
+        'scope': scope,
+        'language_code': language_code,
+    }
+    
+    resp = make_request(method='deleteMyCommands', params=params)
+    return resp is not None and resp.status_code == 200
+
+
+def get_my_commands(
+    scope: BotCommandScope | None,
+    language_code: str | None,
+) -> bool:
+    params = {
+        'scope': scope,
+        'language_code': language_code,
+    }
+    
+    resp = make_request(method='getMyCommands', params=params)
     return resp is not None and resp.status_code == 200
