@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "tg-api"
+version = "0.1.0"
+description = ""
+authors = ["Ilia Maystrenko <ilia-may@ya.ru>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pydantic = "^2.7.0"
+requests = "^2.31.0"
+loguru = "^0.7.2"
+pydantic-settings = "^2.2.1"
+
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.29.4"
+ruff = "^0.3.7"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
