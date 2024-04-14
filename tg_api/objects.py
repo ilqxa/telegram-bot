@@ -8,15 +8,15 @@ from pydantic import BaseModel, Field
 class Update(BaseModel):
     update_id: int
     message: Message | None
-    channel_post: Message | None
-    poll: Poll | None
-    poll_answer: PollAnswer | None
-    callback_query: CallbackQuery | None
+    channel_post: Message | None = None
+    poll: Poll | None = None
+    poll_answer: PollAnswer | None = None
+    callback_query: CallbackQuery | None = None
 
 
 class CallbackQuery(BaseModel):
     id: str
-    from_user: User = Field(alias='from')
+    from_user: User = Field(alias="from")
     message: Message | None
     inline_message_id: str | None
     chat_instance: str | None
@@ -27,17 +27,17 @@ class CallbackQuery(BaseModel):
 class Message(BaseModel):
     message_id: int
     date: int
-    from_user: User | None = Field(alias='from')
+    from_user: User | None = Field(alias="from")
     chat: Chat
     text: str | None
-    entities: list[MessageEntity] | None
-    poll: Poll | None
+    entities: list[MessageEntity] | None = None
+    poll: Poll | None = None
 
 
 class Chat(BaseModel):
     id: int
-    type: Literal['private', 'group', 'supergroup', 'channel']
-    title: str | None
+    type: Literal["private", "group", "supergroup", "channel"]
+    title: str | None = None
 
 
 class User(BaseModel):
@@ -98,21 +98,20 @@ class InlineKeyboardButton(BaseModel):
     switch_inline_query_current_chat: str | None
     callback_game: str | None
     pay: bool | None
-    
-    
+
+
 class BotCommand(BaseModel):
     command: str = Field(max_length=32)
     description: str = Field(max_length=256)
-    
-    
-class BotCommandScope(BaseModel):
-    ...
-    
-    
+
+
+class BotCommandScope(BaseModel): ...
+
+
 class BotCommandScopeChat(BotCommandScope):
-    type: str = 'chat'
+    type: str = "chat"
     chat_id: int | str
-    
+
 
 Update.update_forward_refs()
 CallbackQuery.update_forward_refs()
