@@ -4,12 +4,13 @@ from typing import Any, Literal
 import requests
 from requests import Response
 from loguru import logger
-from pydantic import HttpUrl, parse_obj_as
+from pydantic import TypeAdapter
 
 from tg_api.config import ApiConf
-from tg_api.objects import MessageEntity, Update, InlineKeyboardMarkup, BotCommand, BotCommandScope
+from tg_api.objects import Update, MessageEntity, BotCommand, BotCommandScope
 
 config = ApiConf()  # type: ignore
+
 
 def make_request(
     method: str,
@@ -18,11 +19,11 @@ def make_request(
 ) -> Response | None:
     with requests.Session() as session:
         response = session.post(
-            url=config.url + '/' + method,
+            url=config.url + "/" + method,
             headers=config.headers,
             params=params,
         )
-    
+
     if response is None:
         logger.warning("Request hasn't returned any response")
         return None
@@ -30,7 +31,7 @@ def make_request(
         logger.warning(f"Bad request: {response.status_code, response.text}")
         return response
     else:
-        logger.info('Succesfull request')
+        logger.info("Succesfull request")
         return response
 
 
@@ -38,26 +39,28 @@ def get_updates(
     offset: int | None = None,
     limit: int = 100,
     timeout: int = 0,
-    allowed_updates: list | str = 'chat_member',
+    allowed_updates: list | str = "chat_member",
 ) -> list[Update]:
     params = {
-        'offset': offset,
-        'limit': limit,
-        'timeout': timeout,
-        'allowed_updates': allowed_updates,
+        "offset": offset,
+        "limit": limit,
+        "timeout": timeout,
+        "allowed_updates": allowed_updates,
     }
-    if resp := make_request(method='getUpdates', params=params):
-        result = json.loads(resp.content.decode('utf-8'))['result']
-        return parse_obj_as(list[Update], result)
+    if resp := make_request(method="getUpdates", params=params):
+        logger.info("Parsing result as list of updates")
+        result = json.loads(resp.content.decode("utf-8"))["result"]
+        expected = TypeAdapter(list[Update])
+        return expected.validate_python(result)
     else:
         return []
-    
+
 
 def send_message(
     chat_id: int | str,
     text: str,
     message_thread_id: int | None = None,
-    parse_mode: Literal['MarkdownV2', 'Markdown', 'HTML'] = 'MarkdownV2',
+    parse_mode: Literal["MarkdownV2", "Markdown", "HTML"] = "MarkdownV2",
     entities: list[MessageEntity] | None = None,
     disable_web_page_preview: bool | None = None,
     disable_notification: bool | None = None,
@@ -67,20 +70,21 @@ def send_message(
     reply_markup: dict[str, Any] | None = None,
 ) -> bool:
     params = {
-        'chat_id': chat_id,
-        'text': text,
-        'message_thread_id': message_thread_id,
-        'parse_mode': parse_mode,
-        'entites': entities,
-        'disable_web_page_preview': disable_web_page_preview,
-        'disable_notification': disable_notification,
-        'protect_content': protect_content,
-        'reply_to_message_id': reply_to_message_id,
-        'allow_sending_without_reply': allow_sending_without_reply,
+        "chat_id": chat_id,
+        "text": text,
+        "message_thread_id": message_thread_id,
+        "parse_mode": parse_mode,
+        "entites": entities,
+        "disable_web_page_preview": disable_web_page_preview,
+        "disable_notification": disable_notification,
+        "protect_content": protect_content,
+        "reply_to_message_id": reply_to_message_id,
+        "allow_sending_without_reply": allow_sending_without_reply,
     }
-    if reply_markup: params['reply_markup'] = reply_markup
+    if reply_markup:
+        params["reply_markup"] = reply_markup
 
-    resp = make_request(method='sendMessage', params=params)
+    resp = make_request(method="sendMessage", params=params)
     return resp is not None and resp.status_code == 200
 
 
@@ -90,7 +94,7 @@ def send_poll(
     options: list[str],
     message_thread_id: int | None = None,
     is_anonymous: bool = True,
-    type: Literal['quiz', 'regular'] = 'regular',
+    type: Literal["quiz", "regular"] = "regular",
     allows_multiple_answers: bool = True,
     correct_option_id: bool | None = None,
     explanation: str | None = None,
@@ -106,28 +110,29 @@ def send_poll(
     reply_markup: dict[str, Any] | None = None,
 ) -> bool:
     params = {
-        'chat_id': chat_id,
-        'question': question,
-        'options': options,
-        'message_thread_id': message_thread_id,
-        'is_anonymous': is_anonymous,
-        'type': type,
-        'allows_multiple_answers': allows_multiple_answers,
-        'correct_option_id': correct_option_id,
-        'explanation': explanation,
-        'explanation_parse_mode': explanation_parse_mode,
-        'explanation_entities': explanation_entities,
-        'open_period': open_period,
-        'close_date': close_date,
-        'is_closed': is_closed,
-        'disable_notification': disable_notification,
-        'protect_content': protect_content,
-        'reply_to_message_id': reply_to_message_id,
-        'allow_sending_without_reply': allow_sending_without_reply,
+        "chat_id": chat_id,
+        "question": question,
+        "options": options,
+        "message_thread_id": message_thread_id,
+        "is_anonymous": is_anonymous,
+        "type": type,
+        "allows_multiple_answers": allows_multiple_answers,
+        "correct_option_id": correct_option_id,
+        "explanation": explanation,
+        "explanation_parse_mode": explanation_parse_mode,
+        "explanation_entities": explanation_entities,
+        "open_period": open_period,
+        "close_date": close_date,
+        "is_closed": is_closed,
+        "disable_notification": disable_notification,
+        "protect_content": protect_content,
+        "reply_to_message_id": reply_to_message_id,
+        "allow_sending_without_reply": allow_sending_without_reply,
     }
-    if reply_markup: params['reply_markup'] = reply_markup
+    if reply_markup:
+        params["reply_markup"] = reply_markup
 
-    resp = make_request(method='sendPoll', params=params)
+    resp = make_request(method="sendPoll", params=params)
     return resp is not None and resp.status_code == 200
 
 
@@ -139,14 +144,14 @@ def answer_callback_query(
     cache_time: int = 0,
 ) -> bool:
     params = {
-        'callback_query_id': callback_query_id,
-        'text': text,
-        'show_alert': show_alert,
-        'url': url,
-        'cache_time': cache_time,
+        "callback_query_id": callback_query_id,
+        "text": text,
+        "show_alert": show_alert,
+        "url": url,
+        "cache_time": cache_time,
     }
 
-    resp = make_request(method='answerCallbackQuery', params=params)
+    resp = make_request(method="answerCallbackQuery", params=params)
     return resp is not None and resp.status_code == 200
 
 
@@ -159,15 +164,15 @@ def forward_message(
     protect_content: bool | None = None,
 ) -> bool:
     params = {
-        'chat_id': chat_id,
-        'from_chat_id': from_chat_id,
-        'message_id': message_id,
-        'message_thread_id': message_thread_id,
-        'disable_notification': disable_notification,
-        'protect_content': protect_content,
+        "chat_id": chat_id,
+        "from_chat_id": from_chat_id,
+        "message_id": message_id,
+        "message_thread_id": message_thread_id,
+        "disable_notification": disable_notification,
+        "protect_content": protect_content,
     }
 
-    resp = make_request(method='forwardMessage', params=params)
+    resp = make_request(method="forwardMessage", params=params)
     return resp is not None and resp.status_code == 200
 
 
@@ -177,12 +182,14 @@ def set_my_commands(
     language_code: str | None = None,
 ) -> bool:
     params: dict[str, Any] = {
-        'commands': json.dumps([c.dict() for c in commands]),
+        "commands": json.dumps([c.dict() for c in commands]),
     }
-    if scope: params['scope'] = scope.json()
-    if language_code: params['language_code'] = language_code
-    
-    resp = make_request(method='setMyCommands', params=params)
+    if scope:
+        params["scope"] = scope.json()
+    if language_code:
+        params["language_code"] = language_code
+
+    resp = make_request(method="setMyCommands", params=params)
     return resp is not None and resp.status_code == 200
 
 
@@ -191,10 +198,12 @@ def delete_my_commands(
     language_code: str | None = None,
 ) -> bool:
     params: dict[str, Any] = {}
-    if scope: params['scope'] = scope.json()
-    if language_code: params['language_code'] = language_code
-    
-    resp = make_request(method='deleteMyCommands', params=params)
+    if scope:
+        params["scope"] = scope.json()
+    if language_code:
+        params["language_code"] = language_code
+
+    resp = make_request(method="deleteMyCommands", params=params)
     return resp is not None and resp.status_code == 200
 
 
@@ -203,11 +212,14 @@ def get_my_commands(
     language_code: str | None = None,
 ) -> list[BotCommand]:
     params: dict[str, Any] = {}
-    if scope: params['scope'] = scope.json()
-    if language_code: params['language_code'] = language_code
-    
-    if resp := make_request(method='getMyCommands', params=params):
-        result = json.loads(resp.content.decode('utf-8'))['result']
-        return parse_obj_as(list[BotCommand], result)
+    if scope:
+        params["scope"] = scope.json()
+    if language_code:
+        params["language_code"] = language_code
+
+    if resp := make_request(method="getMyCommands", params=params):
+        result = json.loads(resp.content.decode("utf-8"))["result"]
+        expected = TypeAdapter(list[BotCommand])
+        return expected.validate_python(result)
     else:
         return []
