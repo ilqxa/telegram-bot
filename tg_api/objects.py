@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 
 class Update(BaseModel):
     update_id: int
-    message: Message | None
+    message: Message | None = None
     channel_post: Message | None = None
     poll: Poll | None = None
     poll_answer: PollAnswer | None = None
@@ -29,7 +29,7 @@ class Message(BaseModel):
     date: int
     from_user: User | None = Field(alias="from")
     chat: Chat
-    text: str | None
+    text: str | None = None
     entities: list[MessageEntity] | None = None
     poll: Poll | None = None
 
@@ -43,7 +43,7 @@ class Chat(BaseModel):
 class User(BaseModel):
     id: int
     first_name: str
-    last_name: str | None
+    last_name: str | None = None
     username: str | None
 
 
