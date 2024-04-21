@@ -17,11 +17,11 @@ class Update(BaseModel):
 class CallbackQuery(BaseModel):
     id: str
     from_user: User = Field(alias="from")
-    message: Message | None
-    inline_message_id: str | None
-    chat_instance: str | None
-    data: str | None
-    game_short_name: str | None
+    message: Message | None = None
+    inline_message_id: str | None = None
+    chat_instance: str | None = None
+    data: str | None = None
+    game_short_name: str | None = None
 
 
 class Message(BaseModel):
@@ -44,17 +44,17 @@ class User(BaseModel):
     id: int
     first_name: str
     last_name: str | None = None
-    username: str | None
+    username: str | None = None
 
 
 class MessageEntity(BaseModel):
     type: str
     offset: int
     length: int
-    url: str | None
-    user: User | None
-    language: str | None
-    custom_emoji_id: str | None
+    url: str | None = None
+    user: User | None = None
+    language: str | None = None
+    custom_emoji_id: str | None = None
 
 
 class Poll(BaseModel):
@@ -66,15 +66,15 @@ class Poll(BaseModel):
     is_anonymous: bool
     type: str
     allows_multiple_answers: bool
-    correct_option_id: int | None
-    explanation: str | None
-    explanation_entities: list[MessageEntity] | None
-    open_period: int | None
-    close_date: int | None
+    correct_option_id: int | None = None
+    explanation: str | None = None
+    explanation_entities: list[MessageEntity] | None = None
+    open_period: int | None = None
+    close_date: int | None = None
 
 
 class PollOption(BaseModel):
-    text: str | None
+    text: str | None = None
     voter_count: int
 
 
@@ -90,14 +90,14 @@ class InlineKeyboardMarkup(BaseModel):
 
 class InlineKeyboardButton(BaseModel):
     text: str
-    url: str | None
-    callback_data: str | None
-    web_app: str | None
-    login_url: str | None
-    switch_inline_query: str | None
-    switch_inline_query_current_chat: str | None
-    callback_game: str | None
-    pay: bool | None
+    url: str | None = None
+    callback_data: str | None = None
+    web_app: str | None = None
+    login_url: str | None = None
+    switch_inline_query: str | None = None
+    switch_inline_query_current_chat: str | None = None
+    callback_game: str | None = None
+    pay: bool | None = None
 
 
 class BotCommand(BaseModel):
