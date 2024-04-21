@@ -2,12 +2,12 @@ import json
 from typing import Any, Literal
 
 import requests
-from requests import Response
 from loguru import logger
 from pydantic import TypeAdapter
+from requests import Response
 
 from tg_api.config import ApiConf
-from tg_api.objects import Update, MessageEntity, BotCommand, BotCommandScope
+from tg_api.objects import BotCommand, BotCommandScope, Message, MessageEntity, Update
 
 config = ApiConf()  # type: ignore
 
@@ -68,7 +68,7 @@ def send_message(
     reply_to_message_id: int | None = None,
     allow_sending_without_reply: bool | None = None,
     reply_markup: dict[str, Any] | None = None,
-) -> bool:
+) -> Message | None:
     params = {
         "chat_id": chat_id,
         "text": text,
@@ -85,7 +85,8 @@ def send_message(
         params["reply_markup"] = reply_markup
 
     resp = make_request(method="sendMessage", params=params)
-    return resp is not None and resp.status_code == 200
+    if resp is not None and resp.status_code == 200:
+        return Message.model_validate(resp.json()['result'])
 
 
 def send_poll(

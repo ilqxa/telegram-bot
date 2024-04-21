@@ -111,19 +111,3 @@ class BotCommandScope(BaseModel): ...
 class BotCommandScopeChat(BotCommandScope):
     type: str = "chat"
     chat_id: int | str
-
-
-Update.update_forward_refs()
-CallbackQuery.update_forward_refs()
-Message.update_forward_refs()
-Chat.update_forward_refs()
-User.update_forward_refs()
-MessageEntity.update_forward_refs()
-Poll.update_forward_refs()
-PollOption.update_forward_refs()
-PollAnswer.update_forward_refs()
-InlineKeyboardMarkup.update_forward_refs()
-InlineKeyboardButton.update_forward_refs()
-BotCommand.update_forward_refs()
-BotCommandScope.update_forward_refs()
-BotCommandScopeChat.update_forward_refs()
