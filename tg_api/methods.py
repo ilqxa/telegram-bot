@@ -93,7 +93,7 @@ def send_message(
 
 def send_photo(
     chat_id: int | str,
-    photo: io.BytesIO | str,
+    photo: io.BytesIO,
     message_thread_id: int | None = None,
     caption: str | None = None,
     has_spoiler: bool = False,
@@ -102,7 +102,6 @@ def send_photo(
 ) -> Message:
     params = {
         "chat_id": chat_id,
-        "photo": photo,
         "message_thread_id": message_thread_id,
         "caption": caption,
         "has_spoiler": has_spoiler,
@@ -111,7 +110,9 @@ def send_photo(
     if reply_markup:
         params["reply_markup"] = reply_markup
 
-    resp = make_request(method="sendPhoto", params=params)
+    files = {'photo': photo}
+
+    resp = make_request(method="sendPhoto", params=params, files=files)
     if resp is not None and resp.status_code == 200:
         return Message.model_validate(resp.json()['result'])
 
