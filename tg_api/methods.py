@@ -8,8 +8,7 @@ from pydantic import TypeAdapter
 from requests import Response
 
 from tg_api.config import ApiConf
-from tg_api.objects import (BotCommand, BotCommandScope, Message,
-                            MessageEntity, Update)
+from tg_api.objects import BotCommand, BotCommandScope, Message, MessageEntity, Update
 
 config = ApiConf()  # type: ignore
 
@@ -23,7 +22,7 @@ def make_request(
     with requests.Session() as session:
         response = session.post(
             url=config.url + "/" + method,
-            headers=config.headers,
+            # headers=config.headers,
             params=params,
             files=files,
         )
@@ -32,7 +31,7 @@ def make_request(
         logger.warning("Request hasn't returned any response")
         return None
     elif response.status_code != 200:
-        logger.warning(f"Bad request: {response.status_code, response.text}")
+        logger.error(f"Bad request: {response.status_code, response.text}")
         return response
     else:
         logger.info("Succesfull request")
@@ -90,7 +89,7 @@ def send_message(
 
     resp = make_request(method="sendMessage", params=params)
     if resp is not None and resp.status_code == 200:
-        return Message.model_validate(resp.json()['result'])
+        return Message.model_validate(resp.json()["result"])
 
 
 def send_photo(
@@ -112,11 +111,11 @@ def send_photo(
     if reply_markup:
         params["reply_markup"] = reply_markup
 
-    files = {'photo': photo}
+    files = {"photo": photo}
 
     resp = make_request(method="sendPhoto", params=params, files=files)
     if resp is not None and resp.status_code == 200:
-        return Message.model_validate(resp.json()['result'])
+        return Message.model_validate(resp.json()["result"])
 
 
 def send_poll(
