@@ -1,3 +1,4 @@
+import io
 import json
 from typing import Any, Literal
 
@@ -7,7 +8,8 @@ from pydantic import TypeAdapter
 from requests import Response
 
 from tg_api.config import ApiConf
-from tg_api.objects import BotCommand, BotCommandScope, Message, MessageEntity, Update
+from tg_api.objects import (BotCommand, BotCommandScope, Message,
+                            MessageEntity, Update)
 
 config = ApiConf()  # type: ignore
 
@@ -85,6 +87,31 @@ def send_message(
         params["reply_markup"] = reply_markup
 
     resp = make_request(method="sendMessage", params=params)
+    if resp is not None and resp.status_code == 200:
+        return Message.model_validate(resp.json()['result'])
+
+
+def send_photo(
+    chat_id: int | str,
+    photo: io.BytesIO | str,
+    message_thread_id: int | None = None,
+    caption: str | None = None,
+    has_spoiler: bool = False,
+    reply_to_message_id: int | None = None,
+    reply_markup: dict[str, Any] | None = None,
+) -> Message:
+    params = {
+        "chat_id": chat_id,
+        "photo": photo,
+        "message_thread_id": message_thread_id,
+        "caption": caption,
+        "has_spoiler": has_spoiler,
+        "reply_to_message_id": reply_to_message_id,
+    }
+    if reply_markup:
+        params["reply_markup"] = reply_markup
+
+    resp = make_request(method="sendPhoto", params=params)
     if resp is not None and resp.status_code == 200:
         return Message.model_validate(resp.json()['result'])
 
