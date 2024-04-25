@@ -17,6 +17,7 @@ config = ApiConf()  # type: ignore
 def make_request(
     method: str,
     params: dict[str, Any],
+    files: dict[str, Any] | None = None,
     config: ApiConf = config,
 ) -> Response | None:
     with requests.Session() as session:
@@ -24,6 +25,7 @@ def make_request(
             url=config.url + "/" + method,
             headers=config.headers,
             params=params,
+            files=files,
         )
 
     if response is None:
