@@ -92,6 +92,36 @@ def send_message(
         return Message.model_validate(resp.json()["result"])
 
 
+def edit_message_text(
+    text: str,
+    business_connection_id: str | None = None,
+    chat_id: int | str | None = None,
+    message_id: int | None = None,
+    inline_message_id: str | None = None,
+    parse_mode: Literal["MarkdownV2", "Markdown", "HTML"] = "MarkdownV2",
+    entities: list[MessageEntity] | None = None,
+    reply_markup: dict[str, Any] | None = None,
+) -> Message | bool:
+    params = {
+        "chat_id": chat_id,
+        "text": text,
+        "business_connection_id": business_connection_id,
+        "parse_mode": parse_mode,
+        "entites": entities,
+        "message_id": message_id,
+        "inline_message_id": inline_message_id,
+    }
+    if reply_markup:
+        params["reply_markup"] = reply_markup
+
+    resp = make_request(method="editMessageText", params=params)
+    if resp is not None and resp.status_code == 200:
+        if not inline_message_id:
+            return Message.model_validate(resp.json()["result"])
+        else:
+            return bool(resp.json()["result"])
+
+
 def send_photo(
     chat_id: int | str,
     photo: io.BytesIO,
