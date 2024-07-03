@@ -26,6 +26,7 @@ class CallbackQuery(BaseModel):
 
 class Message(BaseModel):
     message_id: int
+    message_thread_id: int | None = None
     date: int
     from_user: User | None = Field(alias="from")
     chat: Chat
