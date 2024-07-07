@@ -34,7 +34,7 @@ def make_request(
         logger.error(f"Bad request: {response.status_code, response.text}")
         return response
     else:
-        logger.info("Succesfull request")
+        # logger.info("Succesfull request")
         return response
 
 
@@ -51,7 +51,7 @@ def get_updates(
         "allowed_updates": allowed_updates,
     }
     if resp := make_request(method="getUpdates", params=params):
-        logger.info("Parsing result as list of updates")
+        # logger.info("Parsing result as list of updates")
         result = json.loads(resp.content.decode("utf-8"))["result"]
         expected = TypeAdapter(list[Update])
         return expected.validate_python(result)
