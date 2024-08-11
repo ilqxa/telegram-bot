@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "tg-api"
-version = "0.5.2"
+version = "0.5.3"
 description = ""
 authors = ["Ilia Maystrenko <ilia-may@ya.ru>"]
 readme = "README.md"

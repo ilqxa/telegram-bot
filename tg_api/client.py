@@ -77,6 +77,31 @@ class BaseClient:
             logger.info("Succesfull request")
         return response
 
+    def edit_message_text(
+        self,
+        chat_id: int | str,
+        message_id: int,
+        text: str,
+        reply_markup: dict[str, Any] = {},
+    ) -> requests.Response:
+        params = {
+            "chat_id": chat_id,
+            "message_id": message_id,
+            "text": text,
+            "reply_markup": reply_markup,
+        }
+        response = self.session.post(
+            url=self.config.url + "/editMessageText",
+            params=params,
+        )
+        if response is None:
+            logger.warning("Request hasn't returned any response")
+        elif response.status_code != 200:
+            logger.error(f"Bad request: {response.status_code, response.text}")
+        elif self.verbose:
+            logger.info("Succesfull request")
+        return response
+
     def edit_message_reply_markup(
         self,
         chat_id: int | str,
@@ -136,7 +161,7 @@ class ValidatorClient(BaseClient):
         message_thread_id: int | None = None,
         reply_to_message_id: int | None = None,
         reply_markup: objects.InlineKeyboardMarkup | None = None,
-    ) -> objects.Message:
+    ) -> objects.Message | None:
         resp = super().send_message(
             chat_id,
             text,
@@ -147,17 +172,35 @@ class ValidatorClient(BaseClient):
         if resp is not None and resp.status_code == 200:
             return objects.Message.model_validate(resp.json()["result"])
 
+    def edit_message_text(
+        self,
+        chat_id: int | str,
+        message_id: int,
+        text: str,
+        reply_markup: objects.InlineKeyboardMarkup | None = None,
+    ) -> objects.Message | None:
+        resp = super().edit_message_text(
+            chat_id,
+            message_id,
+            text,
+            reply_markup.model_dump_json(exclude_none=True) if reply_markup else {},
+        )
+        if resp is not None and resp.status_code == 200:
+            return objects.Message.model_validate(resp.json()["result"])
+
     def edit_message_reply_markup(
         self,
         chat_id: int | str,
         message_id: int,
         reply_markup: objects.InlineKeyboardMarkup | None = None,
-    ) -> requests.Response:
-        return super().edit_message_reply_markup(
+    ) -> objects.Message | None:
+        resp = super().edit_message_reply_markup(
             chat_id,
             message_id,
             reply_markup.model_dump_json(exclude_none=True) if reply_markup else {},
         )
+        if resp is not None and resp.status_code == 200:
+            return objects.Message.model_validate(resp.json()["result"])
 
 
 class QueueClient(ValidatorClient):
@@ -216,6 +259,23 @@ class QueueClient(ValidatorClient):
                 text,
                 message_thread_id,
                 reply_to_message_id,
+                reply_markup,
+            )
+        )
+
+    def edit_message_text(
+        self,
+        chat_id: int | str,
+        message_id: int,
+        text: str,
+        reply_markup: objects.InlineKeyboardMarkup | None = None,
+    ) -> None:
+        self.queue.append(
+            partial(
+                super().edit_message_text,
+                chat_id,
+                message_id,
+                text,
                 reply_markup,
             )
         )
