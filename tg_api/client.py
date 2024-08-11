@@ -74,17 +74,29 @@ class BaseClient:
 
 
 class ValidatorClient(BaseClient):
+    def __init__(
+        self,
+        config: ApiConf | None = None,
+        verbose: bool = False,
+        offset_autoupdate: bool = True,
+    ) -> None:
+        super().__init__(config, verbose)
+        self.offset_autoupdate = offset_autoupdate
+        self._offset = 0
+
     def get_updates(
         self,
-        offset: int | None = None,
         limit: int = 100,
         timeout: int = 0,
         allowed_updates: list | str = "chat_member",
     ) -> list[objects.Update]:
-        resp = super().get_updates(offset, limit, timeout, allowed_updates)
+        resp = super().get_updates(self._offset, limit, timeout, allowed_updates)
         if resp is not None and resp.status_code == 200:
             expected = TypeAdapter(list[objects.Update])
-            return expected.validate_python(resp.json()["result"])
+            updates = expected.validate_python(resp.json()["result"])
+            if updates:
+                self._offset = updates[-1].update_id + 1
+            return updates
 
     def send_message(
         self,
@@ -102,8 +114,9 @@ class QueueClient(ValidatorClient):
         self,
         config: ApiConf | None = None,
         verbose: bool = False,
+        offset_autoupdate: bool = True,
     ):
-        super().__init__(config, verbose)
+        super().__init__(config, verbose, offset_autoupdate)
         self.queue: list[Callable[..., Any]] = []
 
     def tick(self) -> Any | None:
@@ -116,13 +129,12 @@ class QueueClient(ValidatorClient):
 
     def get_updates(
         self,
-        offset: int | None = None,
         limit: int = 100,
         timeout: int = 0,
         allowed_updates: list | str = "chat_member",
     ) -> None:
         self.queue.append(
-            partial(super().get_updates, offset, limit, timeout, allowed_updates)
+            partial(super().get_updates, limit, timeout, allowed_updates)
         )
 
     def send_message(
