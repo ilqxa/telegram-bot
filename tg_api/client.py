@@ -209,11 +209,14 @@ class HandlerClient(ValidatorClient):
         config: ApiConf | None = None,
         verbose: bool = False,
         offset_autoupdate: bool = True,
+        min_query_delay: int = 50000,
         update_handlers: set[Callable[[objects.Update], None]] = set(),
     ):
         super().__init__(config, verbose, offset_autoupdate)
+        self.min_query_delay = min_query_delay
         self.update_handlers = update_handlers
-        self.queue: list[tuple[Callable[[], Any], Callable[[Any], None]]] = []
+        self._queue: list[tuple[Callable[[], Any], Callable[[Any], None]]] = []
+        self._last_query: datetime = datetime.now()
 
     def general_handler(self, updates: list[objects.Update]) -> None:
         for u in updates:
@@ -221,12 +224,15 @@ class HandlerClient(ValidatorClient):
                 h(u)
 
     def tick(self) -> None:
-        if self.queue:
-            task, callback = self.queue.pop(0)
+        if (datetime.now() - self._last_query).microseconds < self.min_query_delay:
+            return
+        if self._queue:
+            task, callback = self._queue.pop(0)
         else:
             task = super().get_updates
             callback = self.general_handler
         callback(task())
+        self._last_query = datetime.now()
 
     def send_message(
         self,
@@ -238,7 +244,7 @@ class HandlerClient(ValidatorClient):
         reply_to_message_id: int | None = None,
         reply_markup: objects.InlineKeyboardMarkup | None = None,
     ) -> None:
-        self.queue.append(
+        self._queue.append(
             (
                 partial(
                     super().send_message,
@@ -261,7 +267,7 @@ class HandlerClient(ValidatorClient):
         text: str,
         reply_markup: objects.InlineKeyboardMarkup | None = None,
     ) -> None:
-        self.queue.append(
+        self._queue.append(
             (
                 partial(
                     super().edit_message_text,
@@ -282,7 +288,7 @@ class HandlerClient(ValidatorClient):
         message_id: int,
         reply_markup: objects.InlineKeyboardMarkup | None = None,
     ) -> None:
-        self.queue.append(
+        self._queue.append(
             (
                 partial(
                     super().edit_message_reply_markup,
