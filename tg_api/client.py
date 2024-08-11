@@ -54,11 +54,13 @@ class BaseClient:
         chat_id: int | str,
         text: str,
         message_thread_id: int | None = None,
+        reply_to_message_id: int | None = None,
     ) -> requests.Response:
         params = {
             "chat_id": chat_id,
             "text": text,
             "message_thread_id": message_thread_id,
+            "reply_to_message_id": reply_to_message_id,
         }
         response = self.session.post(
             url=self.config.url + "/sendMessage",
@@ -103,8 +105,11 @@ class ValidatorClient(BaseClient):
         chat_id: int | str,
         text: str,
         message_thread_id: int | None = None,
+        reply_to_message_id: int | None = None,
     ) -> objects.Message:
-        resp = super().send_message(chat_id, text, message_thread_id)
+        resp = super().send_message(
+            chat_id, text, message_thread_id, reply_to_message_id
+        )
         if resp is not None and resp.status_code == 200:
             return objects.Message.model_validate(resp.json()["result"])
 
@@ -133,18 +138,23 @@ class QueueClient(ValidatorClient):
         timeout: int = 0,
         allowed_updates: list | str = "chat_member",
     ) -> None:
-        self.queue.append(
-            partial(super().get_updates, limit, timeout, allowed_updates)
-        )
+        self.queue.append(partial(super().get_updates, limit, timeout, allowed_updates))
 
     def send_message(
         self,
         chat_id: int | str,
         text: str,
         message_thread_id: int | None = None,
+        reply_to_message_id: int | None = None,
     ) -> None:
         self.queue.append(
-            partial(super().send_message, chat_id, text, message_thread_id)
+            partial(
+                super().send_message,
+                chat_id,
+                text,
+                message_thread_id,
+                reply_to_message_id,
+            )
         )
 
 
