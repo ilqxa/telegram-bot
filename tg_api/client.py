@@ -210,29 +210,35 @@ class HandlerClient(ValidatorClient):
         verbose: bool = False,
         offset_autoupdate: bool = True,
         min_query_delay: int = 50000,
-        update_handlers: set[Callable[[objects.Update], None]] = set(),
+        update_handlers: set[Callable[[objects.Update], Any | None]] = set(),
     ):
         super().__init__(config, verbose, offset_autoupdate)
         self.min_query_delay = min_query_delay
         self.update_handlers = update_handlers
-        self._queue: list[tuple[Callable[[], Any], Callable[[Any], None]]] = []
+        self._queue: list[tuple[Callable[[], Any], Callable[[Any], Any | None]]] = []
         self._last_query: datetime = datetime.now()
 
-    def general_handler(self, updates: list[objects.Update]) -> None:
+    def general_handler(self, updates: list[objects.Update]) -> list[Any]:
+        res = []
         for u in updates:
             for h in self.update_handlers:
-                h(u)
+                if processed := h(u):
+                    res.append(processed)
+        return res
 
-    def tick(self) -> None:
+    def tick(self) -> list[Any]:
         if (datetime.now() - self._last_query).microseconds < self.min_query_delay:
-            return
+            return []
         if self._queue:
             task, callback = self._queue.pop(0)
+            res = callback(task())
+            res = [res] if res else []
         else:
             task = super().get_updates
             callback = self.general_handler
-        callback(task())
+            res = callback(task())
         self._last_query = datetime.now()
+        return res
 
     def send_message(
         self,
