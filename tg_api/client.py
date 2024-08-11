@@ -203,49 +203,35 @@ class ValidatorClient(BaseClient):
             return objects.Message.model_validate(resp.json()["result"])
 
 
-class QueueClient(ValidatorClient):
+class HandlerClient(ValidatorClient):
     def __init__(
         self,
         config: ApiConf | None = None,
         verbose: bool = False,
         offset_autoupdate: bool = True,
-        get_updates_if_empty: bool = True,
+        update_handlers: set[Callable[[objects.Update], None]] = set(),
     ):
         super().__init__(config, verbose, offset_autoupdate)
-        self.get_updates_if_empty = get_updates_if_empty
-        self.queue: list[Callable[..., Any]] = []
+        self.update_handlers = update_handlers
+        self.queue: list[tuple[Callable[[], Any], Callable[[Any], None]]] = []
 
-    def tick(self) -> Any | None:
+    def general_handler(self, updates: list[objects.Update]) -> None:
+        for u in updates:
+            for h in self.update_handlers:
+                h(u)
+
+    def tick(self) -> None:
         if self.queue:
-            task = self.queue.pop(0)
-        elif self.get_updates_if_empty:
-            task = super().get_updates
+            task, callback = self.queue.pop(0)
         else:
-            return
-        res = task()
-        # if isinstance(res, errors.Error):
-        #     self.queue.insert(0, task)
-        return res
-
-    def get_updates(
-        self,
-        offset: int | None = None,
-        limit: int = 100,
-        timeout: int = 0,
-        allowed_updates: list | str = "chat_member",
-    ) -> None:
-        self.queue.append(
-            partial(
-                super().get_updates,
-                offset,
-                limit,
-                timeout,
-                allowed_updates,
-            )
-        )
+            task = super().get_updates
+            callback = self.general_handler
+        callback(task())
 
     def send_message(
         self,
+        callback: Callable[[objects.Message], None] = lambda _: None,
+        *,
         chat_id: int | str,
         text: str,
         message_thread_id: int | None = None,
@@ -253,64 +239,57 @@ class QueueClient(ValidatorClient):
         reply_markup: objects.InlineKeyboardMarkup | None = None,
     ) -> None:
         self.queue.append(
-            partial(
-                super().send_message,
-                chat_id,
-                text,
-                message_thread_id,
-                reply_to_message_id,
-                reply_markup,
+            (
+                partial(
+                    super().send_message,
+                    chat_id,
+                    text,
+                    message_thread_id,
+                    reply_to_message_id,
+                    reply_markup,
+                ),
+                callback,
             )
         )
 
     def edit_message_text(
         self,
+        callback: Callable[[objects.Message], None] = lambda _: None,
+        *,
         chat_id: int | str,
         message_id: int,
         text: str,
         reply_markup: objects.InlineKeyboardMarkup | None = None,
     ) -> None:
         self.queue.append(
-            partial(
-                super().edit_message_text,
-                chat_id,
-                message_id,
-                text,
-                reply_markup,
+            (
+                partial(
+                    super().edit_message_text,
+                    chat_id,
+                    message_id,
+                    text,
+                    reply_markup,
+                ),
+                callback,
             )
         )
 
     def edit_message_reply_markup(
         self,
+        callback: Callable[[objects.Message], None] = lambda _: None,
+        *,
         chat_id: int | str,
         message_id: int,
         reply_markup: objects.InlineKeyboardMarkup | None = None,
     ) -> None:
         self.queue.append(
-            partial(
-                super().edit_message_reply_markup,
-                chat_id,
-                message_id,
-                reply_markup,
+            (
+                partial(
+                    super().edit_message_reply_markup,
+                    chat_id,
+                    message_id,
+                    reply_markup,
+                ),
+                callback,
             )
         )
-
-
-class HandlerClient(QueueClient):
-    def __init__(
-        self,
-        config: ApiConf | None = None,
-        verbose: bool = False,
-        offset_autoupdate: bool = True,
-        get_updates_if_empty: bool = True,
-        handlers: set[Callable[[objects.Update], None]] = set(),
-    ):
-        super().__init__(config, verbose, offset_autoupdate, get_updates_if_empty)
-        self.handlers = handlers
-
-    def tick(self) -> None:
-        res = super().tick()
-        if isinstance(res, list) and all([isinstance(i, objects.Update) for i in res]):
-            for upd in res:
-                for h in self.handlers:
-                    h(upd)
