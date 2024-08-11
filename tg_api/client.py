@@ -88,16 +88,19 @@ class ValidatorClient(BaseClient):
 
     def get_updates(
         self,
+        offset: int | None = None,
         limit: int = 100,
         timeout: int = 0,
         allowed_updates: list | str = "chat_member",
     ) -> list[objects.Update]:
-        resp = super().get_updates(self._offset, limit, timeout, allowed_updates)
+        resp = super().get_updates(
+            offset or self._offset, limit, timeout, allowed_updates
+        )
         if resp is not None and resp.status_code == 200:
             expected = TypeAdapter(list[objects.Update])
             updates = expected.validate_python(resp.json()["result"])
-            if updates:
-                self._offset = updates[-1].update_id + 1
+            if self.offset_autoupdate and updates:
+                self._offset = max(u.update_id for u in updates) + 1
             return updates
 
     def send_message(
@@ -134,11 +137,12 @@ class QueueClient(ValidatorClient):
 
     def get_updates(
         self,
+        offset: int | None = None,
         limit: int = 100,
         timeout: int = 0,
         allowed_updates: list | str = "chat_member",
     ) -> None:
-        self.queue.append(partial(super().get_updates, limit, timeout, allowed_updates))
+        self.queue.append(partial(super().get_updates, offset, limit, timeout, allowed_updates))
 
     def send_message(
         self,
