@@ -123,17 +123,23 @@ class QueueClient(ValidatorClient):
         config: ApiConf | None = None,
         verbose: bool = False,
         offset_autoupdate: bool = True,
+        get_updates_if_empty: bool = True,
     ):
         super().__init__(config, verbose, offset_autoupdate)
+        self.get_updates_if_empty = get_updates_if_empty
         self.queue: list[Callable[..., Any]] = []
 
     def tick(self) -> Any | None:
         if self.queue:
             task = self.queue.pop(0)
-            res = task()
-            # if isinstance(res, errors.Error):
-            #     self.queue.insert(0, task)
-            return res
+        elif self.get_updates_if_empty:
+            task = super().get_updates
+        else:
+            return
+        res = task()
+        # if isinstance(res, errors.Error):
+        #     self.queue.insert(0, task)
+        return res
 
     def get_updates(
         self,
@@ -167,9 +173,11 @@ class HandlerClient(QueueClient):
         self,
         config: ApiConf | None = None,
         verbose: bool = False,
+        offset_autoupdate: bool = True,
+        get_updates_if_empty: bool = True,
         handlers: set[Callable[[objects.Update], None]] = set(),
     ):
-        super().__init__(config, verbose)
+        super().__init__(config, verbose, offset_autoupdate, get_updates_if_empty)
         self.handlers = handlers
 
     def tick(self) -> None:
