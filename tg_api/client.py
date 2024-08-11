@@ -134,3 +134,21 @@ class QueueClient(ValidatorClient):
         self.queue.append(
             partial(super().send_message, chat_id, text, message_thread_id)
         )
+
+
+class HandlerClient(QueueClient):
+    def __init__(
+        self,
+        config: ApiConf | None = None,
+        verbose: bool = False,
+        handlers: set[Callable[[objects.Update], None]] = set(),
+    ):
+        super().__init__(config, verbose)
+        self.handlers = handlers
+
+    def tick(self) -> None:
+        res = super().tick()
+        if isinstance(res, list) and all([isinstance(i, objects.Update) for i in res]):
+            for upd in res:
+                for h in self.handlers:
+                    h(upd)
