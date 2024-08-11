@@ -53,6 +53,7 @@ class BaseClient:
         self,
         chat_id: int | str,
         text: str,
+        parse_mode: str = "MarkdownV2",
         message_thread_id: int | None = None,
         reply_to_message_id: int | None = None,
         reply_markup: dict[str, Any] | None = None,
@@ -60,6 +61,7 @@ class BaseClient:
         params = {
             "chat_id": chat_id,
             "text": text,
+            "parse_mode": parse_mode,
             "message_thread_id": message_thread_id,
             "reply_to_message_id": reply_to_message_id,
         }
@@ -82,12 +84,14 @@ class BaseClient:
         chat_id: int | str,
         message_id: int,
         text: str,
+        parse_mode: str = "MarkdownV2",
         reply_markup: dict[str, Any] = {},
     ) -> requests.Response:
         params = {
             "chat_id": chat_id,
             "message_id": message_id,
             "text": text,
+            "parse_mode": parse_mode,
             "reply_markup": reply_markup,
         }
         response = self.session.post(
@@ -158,6 +162,7 @@ class ValidatorClient(BaseClient):
         self,
         chat_id: int | str,
         text: str,
+        parse_mode: str = "MarkdownV2",
         message_thread_id: int | None = None,
         reply_to_message_id: int | None = None,
         reply_markup: objects.InlineKeyboardMarkup | None = None,
@@ -165,6 +170,7 @@ class ValidatorClient(BaseClient):
         resp = super().send_message(
             chat_id,
             text,
+            parse_mode,
             message_thread_id,
             reply_to_message_id,
             reply_markup.model_dump_json(exclude_none=True) if reply_markup else None,
@@ -177,12 +183,14 @@ class ValidatorClient(BaseClient):
         chat_id: int | str,
         message_id: int,
         text: str,
+        parse_mode: str = "MarkdownV2",
         reply_markup: objects.InlineKeyboardMarkup | None = None,
     ) -> objects.Message | None:
         resp = super().edit_message_text(
             chat_id,
             message_id,
             text,
+            parse_mode,
             reply_markup.model_dump_json(exclude_none=True) if reply_markup else {},
         )
         if resp is not None and resp.status_code == 200:
@@ -246,6 +254,7 @@ class HandlerClient(ValidatorClient):
         *,
         chat_id: int | str,
         text: str,
+        parse_mode: str = "MarkdownV2",
         message_thread_id: int | None = None,
         reply_to_message_id: int | None = None,
         reply_markup: objects.InlineKeyboardMarkup | None = None,
@@ -256,6 +265,7 @@ class HandlerClient(ValidatorClient):
                     super().send_message,
                     chat_id,
                     text,
+                    parse_mode,
                     message_thread_id,
                     reply_to_message_id,
                     reply_markup,
@@ -271,6 +281,7 @@ class HandlerClient(ValidatorClient):
         chat_id: int | str,
         message_id: int,
         text: str,
+        parse_mode: str = "MarkdownV2",
         reply_markup: objects.InlineKeyboardMarkup | None = None,
     ) -> None:
         self._queue.append(
@@ -280,6 +291,7 @@ class HandlerClient(ValidatorClient):
                     chat_id,
                     message_id,
                     text,
+                    parse_mode,
                     reply_markup,
                 ),
                 callback,
